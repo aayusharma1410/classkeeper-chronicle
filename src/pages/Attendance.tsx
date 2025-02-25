@@ -12,6 +12,13 @@ import {
 } from "@/components/ui/table";
 import { Calendar } from "@/components/ui/calendar";
 import { useState } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 
 const attendanceData = [
   {
@@ -20,6 +27,11 @@ const attendanceData = [
     time: "09:00 AM",
     totalStudents: 30,
     presentStudents: 28,
+    students: [
+      { id: 1, name: "John Smith", present: true },
+      { id: 2, name: "Emma Wilson", present: true },
+      { id: 3, name: "Michael Brown", present: false },
+    ]
   },
   {
     id: 2,
@@ -27,6 +39,11 @@ const attendanceData = [
     time: "11:00 AM",
     totalStudents: 25,
     presentStudents: 23,
+    students: [
+      { id: 4, name: "Sarah Johnson", present: true },
+      { id: 5, name: "David Lee", present: true },
+      { id: 6, name: "Lisa Anderson", present: false },
+    ]
   },
   {
     id: 3,
@@ -34,11 +51,44 @@ const attendanceData = [
     time: "02:00 PM",
     totalStudents: 20,
     presentStudents: 18,
+    students: [
+      { id: 7, name: "James Wilson", present: true },
+      { id: 8, name: "Emily Davis", present: false },
+      { id: 9, name: "Robert Taylor", present: true },
+    ]
   },
 ];
 
 const Attendance = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [selectedClass, setSelectedClass] = useState<typeof attendanceData[0] | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [attendanceState, setAttendanceState] = useState(attendanceData);
+
+  const handleAttendanceUpdate = (classId: number, studentId: number, present: boolean) => {
+    setAttendanceState(prevState => prevState.map(classItem => {
+      if (classItem.id === classId) {
+        return {
+          ...classItem,
+          students: classItem.students.map(student => {
+            if (student.id === studentId) {
+              return { ...student, present };
+            }
+            return student;
+          }),
+          presentStudents: present 
+            ? classItem.presentStudents + 1 
+            : classItem.presentStudents - 1
+        };
+      }
+      return classItem;
+    }));
+  };
+
+  const openAttendanceSheet = (classData: typeof attendanceData[0]) => {
+    setSelectedClass(classData);
+    setIsOpen(true);
+  };
 
   return (
     <AppLayout>
@@ -70,7 +120,7 @@ const Attendance = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {attendanceData.map((record) => (
+                {attendanceState.map((record) => (
                   <TableRow key={record.id}>
                     <TableCell className="font-medium">
                       {record.className}
@@ -79,7 +129,11 @@ const Attendance = () => {
                     <TableCell>{record.totalStudents}</TableCell>
                     <TableCell>{record.presentStudents}</TableCell>
                     <TableCell>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => openAttendanceSheet(record)}
+                      >
                         Take Attendance
                       </Button>
                     </TableCell>
@@ -89,6 +143,55 @@ const Attendance = () => {
             </Table>
           </Card>
         </div>
+
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+            <SheetHeader>
+              <SheetTitle>Take Attendance - {selectedClass?.className}</SheetTitle>
+              <SheetDescription>
+                {date?.toLocaleDateString()} | {selectedClass?.time}
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Student Name</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {selectedClass?.students.map((student) => (
+                    <TableRow key={student.id}>
+                      <TableCell>{student.name}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          student.present ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {student.present ? 'Present' : 'Absent'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant={student.present ? "destructive" : "default"}
+                          size="sm"
+                          onClick={() => {
+                            if (selectedClass) {
+                              handleAttendanceUpdate(selectedClass.id, student.id, !student.present);
+                            }
+                          }}
+                        >
+                          Mark {student.present ? 'Absent' : 'Present'}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </AppLayout>
   );
