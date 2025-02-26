@@ -87,42 +87,45 @@ const Index = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // This is just a demo authentication
-    // In a real app, this would connect to a backend
+    // Accept all credentials as valid
     switch (selectedRole) {
       case 'teacher':
-        const subject = subjects.find(s => s.code.toLowerCase() === subjectCode.toLowerCase());
-        if (subject) {
-          sessionStorage.setItem("currentSubject", JSON.stringify(subject));
-          navigate("/attendance");
-        } else {
-          setError("Invalid subject code");
-        }
+        // For teachers, create a dummy subject if the code doesn't exist
+        const subject = subjects.find(s => s.code.toLowerCase() === subjectCode.toLowerCase()) || {
+          id: 999,
+          name: "Custom Subject",
+          code: subjectCode,
+          teacher: "Teacher"
+        };
+        sessionStorage.setItem("currentSubject", JSON.stringify(subject));
+        navigate("/attendance");
         break;
+
       case 'student':
-        if (username === "student" && password === "password") {
-          sessionStorage.setItem("currentUser", JSON.stringify({ role: 'student', name: "John Doe", id: "STU001" }));
-          navigate("/student-dashboard");
-        } else {
-          setError("Invalid credentials");
-        }
+        sessionStorage.setItem("currentUser", JSON.stringify({ 
+          role: 'student', 
+          name: username || "Student User", 
+          id: "STU001" 
+        }));
+        navigate("/student-dashboard");
         break;
+
       case 'mentor':
-        if (username === "mentor" && password === "password") {
-          sessionStorage.setItem("currentUser", JSON.stringify({ role: 'mentor', name: "Jane Smith" }));
-          navigate("/mentor-dashboard");
-        } else {
-          setError("Invalid credentials");
-        }
+        sessionStorage.setItem("currentUser", JSON.stringify({ 
+          role: 'mentor', 
+          name: username || "Mentor User"
+        }));
+        navigate("/mentor-dashboard");
         break;
+
       case 'admin':
-        if (username === "admin" && password === "admin123") {
-          sessionStorage.setItem("currentUser", JSON.stringify({ role: 'admin', name: "Admin User" }));
-          navigate("/admin-dashboard");
-        } else {
-          setError("Invalid credentials");
-        }
+        sessionStorage.setItem("currentUser", JSON.stringify({ 
+          role: 'admin', 
+          name: username || "Admin User"
+        }));
+        navigate("/admin-dashboard");
         break;
+
       default:
         setError("Please select a role");
     }
